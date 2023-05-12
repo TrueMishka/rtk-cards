@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   Box,
   Button,
@@ -7,58 +7,70 @@ import {
   FormControlLabel,
   FormGroup,
   FormLabel,
-  Grid,
   IconButton,
   InputAdornment,
-  InputLabel,
-  OutlinedInput,
   Paper,
   TextField,
   Typography,
-} from '@mui/material';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import s from './style.module.css';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
-import { useAppDispatch } from 'app/hooks';
-import { authThunks } from 'features/auth/auth.slice';
+} from '@mui/material'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import s from './style.module.css'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { authThunks } from 'features/auth/auth.slice'
+import { FormHeaderTitle } from 'components/FormHeaderTitle/FormHeaderTitle'
+import { selectIsLoggedIn } from 'features/auth/auth.selectors'
+import { useActions, useAppDispatch, useAppSelector } from 'common/hooks';
+import { toast } from 'react-toastify'
 
 type FormValues = {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-};
+  email: string
+  password: string
+  rememberMe: boolean
+}
 
 export const Login = () => {
-  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const isLoggedIn = useAppSelector(selectIsLoggedIn)
+  const {login} = useActions(authThunks)
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
 
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleClickShowPassword = () => setShowPassword((show) => !show)
 
   const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-  };
+    event.preventDefault()
+  }
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>();
+  } = useForm<FormValues>()
 
   const onSubmit: SubmitHandler<FormValues> = (data) => {
-    dispatch(authThunks.login(data))
-    console.log(data);
-  };
+    login(data)
+      .unwrap()
+      .then((res) => {
+        toast.success('Вы успешно залогинились')
+        navigate('/profile')
+      })
+      .catch((err) => {
+        toast.error(err.response.error)
+      })
+    console.log(data)
+  }
+
+  // if (isLoggedIn) {
+  //   return <Navigate to={'/'}/>
+  // }
 
   return (
     <Box className={s.wrapper}>
       <Paper variant={'outlined'} className={s.wrapperForm}>
         <FormControl>
           <FormLabel focused={false}>
-            <Typography component="h1" variant="h5" className={s.formTitle}>
-              Sign in
-            </Typography>
+            <FormHeaderTitle title={'Sign in'} />
           </FormLabel>
           <Box component={'form'} onSubmit={handleSubmit(onSubmit)}>
             <FormGroup className={s.form}>
@@ -106,8 +118,14 @@ export const Login = () => {
               </Button>
             </FormGroup>
           </Box>
+          <Box className={s.formFooter}>
+            <Typography component="p" variant="caption">
+              Don't have an account?
+            </Typography>
+            <Link to={'/register'}>Sign up</Link>
+          </Box>
         </FormControl>
       </Paper>
     </Box>
-  );
-};
+  )
+}
